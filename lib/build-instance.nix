@@ -254,6 +254,7 @@ with open(sys.argv[1], "rb") as f:
 
         echo "==> Running first-time WSS-wineprefixcreate (creates Contents/SharedSupport/prefix)"
         "$APP/Contents/MacOS/$(launcher_bin)" WSS-wineprefixcreate
+        sleep 6
       else
         echo "==> $APP already exists! Re-syncing settings only."
 
@@ -285,6 +286,7 @@ with open(sys.argv[1], "rb") as f:
 
           echo "    Running WSS-wineboot to refresh the existing prefix (drive_c is left untouched)"
           "$APP/Contents/MacOS/$(launcher_bin)" WSS-wineboot
+          sleep 6
         fi
         ''}
 

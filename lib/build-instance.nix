@@ -212,11 +212,29 @@ let
       RUN_PATH=${lib.escapeShellArg cfg.runPath}
 
       launcher_bin() {
-        ${pkgs.python3}/bin/python3 - c '
+        local name
+        name="$(${pkgs.python3}/bin/python3 -c '
 import plistlib, sys
 with open(sys.argv[1], "rb") as f:
-    print(plistlib.load(f)["CFBundleExecutable"])
-' "$APP/Contents/Info.plist"
+    print(plistlib.load(f).get("CFBundleExecutable") or "")
+' "$APP/Contents/Info.plist" 2>&1)" || name=""
+
+        if [ -n "$name" ] && [ -e "$APP/Contents/MacOS/$name" ]; then
+          echo "$name"
+          return 0
+        fi
+
+        for candidate in Sikarugir launcher wineskinlauncher; do
+          if [ -e "$APP/Contents/MacOS/$candidate" ]; then
+            echo "$candidate"
+            return 0
+          fi
+        done
+
+        echo "sikarugir-nix: could not determine the launcher binary name in" \
+             "$APP/Contents/MacOS (CFBundleExecutable read back '$name'," \
+             "and none of the known candidate names exist there either)" >&2
+        return 1
       }
 
       mkdir -p "$DEST"

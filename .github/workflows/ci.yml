@@ -50,7 +50,7 @@ jobs:
           set -euxo pipefail
           DEST="$RUNNER_TEMP/SikarugirInstances"
           nix build .#satisfactory-example
-          nix eval --raw --impure --expr '
+          ACTIVATION_SCRIPT="$(nix build --no-link --print-out-paths --impure --expr '
             let
               flake = builtins.getFlake (toString ./.);
               pkgs = import flake.inputs.nixpkgs { system = builtins.currentSystem; };
@@ -60,8 +60,9 @@ jobs:
                 modules = [ { options = opts; } (import ./examples/satisfactory.nix) ];
               }).config;
               inst = (flake.lib.mkInstance { inherit pkgs; inherit (pkgs) lib; }) cfg;
-            in inst.activationScript + "/bin/sikarugir-activate-SatisfactoryCX"
-          ' > /tmp/activate-script-path
+            in inst.activationScript
+          ')"
+          echo $ACTIVATION_SCRIPT/bin/sikarugir-activate-SatisfactoryCX" > /tmp/activate-script-path
           "$(cat /tmp/activate-script-path)" "$DEST"
           echo "APP=$DEST/SatisfactoryCX.app" >> "$GITHUB_ENV"
 

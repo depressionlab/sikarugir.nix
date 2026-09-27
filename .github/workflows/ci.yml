@@ -62,7 +62,7 @@ jobs:
               inst = (flake.lib.mkInstance { inherit pkgs; inherit (pkgs) lib; }) cfg;
             in inst.activationScript
           ')"
-          echo $ACTIVATION_SCRIPT/bin/sikarugir-activate-SatisfactoryCX" > /tmp/activate-script-path
+          echo "$ACTIVATION_SCRIPT/bin/sikarugir-activate-SatisfactoryCX" > /tmp/activate-script-path
           "$(cat /tmp/activate-script-path)" "$DEST"
           echo "APP=$DEST/SatisfactoryCX.app" >> "$GITHUB_ENV"
 

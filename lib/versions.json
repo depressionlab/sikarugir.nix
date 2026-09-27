@@ -1,0 +1,76 @@
+{
+	"defaultEngine": "WS12WineSikarugir11.0",
+	"defaultTemplateVersion": "1.0.19",
+	"engines": {
+		"WS11WineCX19.0.2": {
+			"hash": "sha256-z+MWdFTgetvCmwTNcrTzUuT+fBP3bG2BuOOgr2EdodA=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS11WineCX19.0.2.tar.xz",
+			"wineVersion": "WineCX19.0.2 (wine-4.12.1)"
+		},
+		"WS11WineCX20.0.4": {
+			"hash": "sha256-vBiZWsN4TMZywMLKrY1/Ie3LdnKOeDAbsXplV9RwtV8=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS11WineCX20.0.4.tar.xz",
+			"wineVersion": "WineCX20.0.4 (wine-5.0)"
+		},
+		"WS11WineCX21.2.0": {
+			"hash": "sha256-nfik8RzXsEHDSh+y5OYOn6rUJySPVe/0Zqhd/zvIuuw=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS11WineCX21.2.0.tar.xz",
+			"wineVersion": "WineCX21.2.0 (wine-6.0.2)"
+		},
+		"WS11WineCX32Bit19.0.2": {
+			"hash": "sha256-X4QlfkbrXjRqwT5R+b504ryXYLcyYEehs1PJg36ik5A=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS11WineCX32Bit19.0.2.tar.xz",
+			"wineVersion": "WineCX19.0.2 32-bit (wine-4.12.1)"
+		},
+		"WS11WineCX32Bit20.0.4": {
+			"hash": "sha256-BM8vejbanRVtwoUD8hEuWws9nxnYoX/Dwmbsh+gaKGI=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS11WineCX32Bit20.0.4.tar.xz",
+			"wineVersion": "WineCX20.0.4 32-bit (wine-5.0)"
+		},
+		"WS11WineCX32Bit21.2.0": {
+			"hash": "sha256-/IIQmw9RNb4pcvy7MTYHzLn1lTAcDDYxqwRu6CIKPDk=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS11WineCX32Bit21.2.0.tar.xz",
+			"wineVersion": "WineCX21.2.0 32-Bit (wine-6.0.2)"
+		},
+		"WS12WhiskyWine2.5.0_3": {
+			"hash": "sha256-VH6MBawM0xDWWCvGpjRh34rCs0N9HIwciVfOotUAEog=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS12WhiskyWine2.5.0_3.tar.xz",
+			"wineVersion": "WhiskyWine-2.5.0 (wine-7.7 revision 3)"
+		},
+		"WS12WineCX23.7.1_4": {
+			"hash": "sha256-8VGQQmOfN+8gJA1fWpCRFWi0i+xIFu4cbhxEozxptkw=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS12WineCX23.7.1_4.tar.xz",
+			"wineVersion": "SikarugirCX 23.7.1 (revision 4)"
+		},
+		"WS12WineCX24.0.7_7": {
+			"hash": "sha256-ID+en9bCzHfmUl15ikNM7TJhRds0o1Y1XgVlnTRF/Rw=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS12WineCX24.0.7_7.tar.xz",
+			"wineVersion": "WineCX 24.0.7 (revision 6)"
+		},
+		"WS12WineGPTK1.1_3": {
+			"hash": "sha256-5u/L8GcW0VDxgDCqTH67yl/rtWb0JerCY3WC9jmd1eQ=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS12WineGPTK1.1_3.tar.xz",
+			"wineVersion": "Game Porting Toolkit v1.1 (revision 3)"
+		},
+		"WS12WineSikarugir10.0_6": {
+			"hash": "sha256-nafuDL84ZSLzqZBpQ3JtnDwSXbvZqxIOPN6A6I1gkbI=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS12WineSikarugir10.0_6.tar.xz",
+			"wineVersion": "wine sikarugir 10.0 (revision 6)"
+		},
+		"WS12WineSikarugir11.0": {
+			"hash": "sha256-3LPeOsqy6vN1kXaNx/b2wg+o5raciN3WHmN5jAK+/Pk=",
+			"url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS12WineSikarugir11.0.tar.xz",
+			"wineVersion": "Wine-Sikarugir 11.0"
+		}
+	},
+	"templates": {
+		"1.0.19": {
+			"hash": "sha256-zp5BUP0vDz6GlIFNghM+qq4bGqvluPJHkVW4gnHPX58=",
+			"url": "https://github.com/Sikarugir-App/Template/releases/download/v1.0/Template-1.0.19.tar.xz"
+		},
+		"Template-1.0.19": {
+			"hash": "sha256-zp5BUP0vDz6GlIFNghM+qq4bGqvluPJHkVW4gnHPX58=",
+			"url": "https://github.com/Sikarugir-App/Template/releases/download/v1.0/Template-1.0.19.tar.xz"
+		}
+	}
+}

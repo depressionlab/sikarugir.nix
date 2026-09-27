@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: nix flake check
+        run: nix flake check --print-build-logs
+
+      - name: Build satisfactory-example
+        run: nix build --print-build-logs .#satisfactory-example
+
+      - name: Build + run dedup-check
+        run: nix build --print-build-logs .#dedup-check
+
+      - name: Evaluate the module/flake-parts outputs (catches syntax errors nothing else forces)
+        run: |
+          set -euxo pipefail
+          nix eval --raw --impure --expr '
+            let flake = builtins.getFlake (toString ./.); in
+            builtins.seq flake.homeManagerModules.default
+            builtins.seq flake.darwinModules.default
+            builtins.seq flake.flakeModules.default
+            "modules evaluate OK"
+          '
+
+      - name: Create the example instance
+        run: |
+          set -euxo pipefail
+          DEST="$RUNNER_TEMP/SikarugirInstances"
+          nix build .#satisfactory-example
+          nix eval --raw --impure --expr '
+            let
+              flake = builtins.getFlake (toString ./.);
+              pkgs = import flake.inputs.nixpkgs { system = builtins.currentSystem; };
+              versions = flake.lib.versions;
+              opts = flake.lib.mkOptions { inherit (pkgs) lib; };
+              cfg = (pkgs.lib.evalModules {
+                modules = [ { options = opts; } (import ./examples/satisfactory.nix) ];
+              }).config;
+              inst = (flake.lib.mkInstance { inherit pkgs; inherit (pkgs) lib; }) cfg;
+            in inst.activationScript + "/bin/sikarugir-activate-SatisfactoryCX"
+          ' > /tmp/activate-script-path
+          "$(cat /tmp/activate-script-path)" "$DEST"
+          echo "APP=$DEST/SatisfactoryCX.app" >> "$GITHUB_ENV"
+
+      - name: Verify codesign
+        run: |
+          set -euxo pipefail
+          codesign --verify --deep --strict --verbose=4 "$APP"
+
+      - name: Verify the new .app is a real directory, not a symlink
+        run: |
+          set -euxo pipefail
+          if [ -L "$APP" ]; then
+            echo "FAIL: $APP is itself a symlink! it should be a real," >&2
+            echo "physically-copied directory (see the activation script's cp -a step)." >&2
+            exit 1
+          fi
+          echo "OK: $APP is a real directory"
+
+      - name: Verify Contents/MacOS is real but Frameworks is shared
+        run: |
+          set -euxo pipefail
+          if [ -L "$APP/Contents/MacOS" ]; then
+            echo "FAIL: Contents/MacOS is a symlink! codesign would have tried (or will next" >&2
+            echo "time) to write a signature into a read-only /nix/store path" >&2
+            exit 1
+          fi
+          if [ ! -L "$APP/Contents/Frameworks" ]; then
+            echo "FAIL: Contents/Frameworks is NOT a symlink! spaceOptimized dedup isn't happening" >&2
+            exit 1
+          fi
+          echo "OK: MacOS is real, Frameworks is shared"
+
+      - name: Check Gatekeeper assessment
+        run: spctl --assess --type execute --verbose "$APP" || true
+
+      - name: Confirm the Wine prefix actually got created
+        run: |
+          set -euxo pipefail
+          test -d "$APP/Contents/SharedSupport/prefix/drive_c"
+          echo "prefix created OK"
+
+      - name: Re-activate
+        run: |
+          set -euxo pipefail
+          "$(cat /tmp/activate-script-path)" "$RUNNER_TEMP/SikarugirInstances"
+          /usr/libexec/PlistBuddy -c "Print :Program Name and Path" "$APP/Contents/Info.plist"

@@ -1,0 +1,33 @@
+# Keeps lib/versions.json fresh automatically.
+name: Update pins
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-pins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Refresh lib/versions.json
+        run: python3 scripts/update-pins.py
+
+      - name: Open a PR if anything changed
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "lib/versions.json: refresh pinned Template/Engine hashes"
+          title: "Automated: refresh Sikarugir Template/Engine pins"
+          body-path: update-pins-notes.txt
+          branch: automated/update-pins
+          delete-branch: true
+          add-paths: lib/versions.json
+          labels: automated-pin-update

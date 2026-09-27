@@ -2,7 +2,7 @@ name: Update flake.lock
 
 on:
   schedule:
-    - cron: "23 6 * * 1"
+    - cron: "45 0 * * *"
   workflow_dispatch:
 
 permissions:
@@ -13,9 +13,34 @@ jobs:
   update-flake-lock:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/update-flake-lock@main
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          pr-title: "Automated: update flake.lock"
-          pr-labels: automated-flake-update
+          persist-credentials: false
+
+      - name: Install Lix
+        uses: samueldr/lix-gha-installer-action@a0fee77b2a98bb7c5c0ed7ae6d6ad4903dbdad0d # v2026-05-15
+        with:
+          extra_nix_config: |
+            substituters = https://cache.nixos.org/ https://nix-community.cachix.org
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+
+      - name: Update lockfile
+        uses: DeterminateSystems/update-flake-lock@834c491b2ece4de0bbd00d85214bb5e83b4da5c6 # v28
+        with:
+          commit-msg: "update flake.lock"
+          pr-title: "update flake.lock"
+          branch: "update-flake-lock"
+          pr-body: |
+            ```
+            {{ env.GIT_COMMIT_MESSAGE }}
+            ```
+
+      - name: Merge
+        run: |
+          sleep 30
+          gh pr checks "$PR" --watch --fail-fast
+          gh pr merge --rebase --delete-branch "$PR"
+        env:
+          PR: ${{ steps.pr.outputs.pull-request-url }}
+

@@ -1,0 +1,117 @@
+name: Diff Changes
+
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  nix-eval-stats:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Lix
+        uses: samueldr/lix-gha-installer-action@a0fee77b2a98bb7c5c0ed7ae6d6ad4903dbdad0d # v2026-05-15
+        with:
+          extra_nix_config: |
+            substituters = https://cache.nixos.org/ https://nix-community.cachix.org
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+
+      - name: Checkout base
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+
+      - name: Discover hosts
+        id: hosts
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2016
+          nix eval --impure --json --expr '
+            let
+              flake = (builtins.getFlake (toString ./.)).outputs;
+              mk = attr: toplevel:
+                map (name: {
+                  inherit name;
+                  attribute = "${attr}.${name}.${toplevel}";
+                }) (builtins.attrNames (flake.${attr} or {}));
+            in
+              mk "nixosConfigurations" "config.system.build.toplevel"
+            ' > hosts.json
+          jq -r '.[] | .name' hosts.json
+
+      - name: Eval stats (before)
+        working-directory: base
+        run: |
+          set -euo pipefail
+          mkdir -p ../stats-before/all
+          while IFS=$'\t' read -r name attr; do
+            echo "::group::eval before: $name"
+            NIX_SHOW_STATS=1 NIX_SHOW_STATS_PATH="../stats-before/all/${name}.json" \
+              nix eval --no-eval-cache ".#${attr}" > /dev/null || \
+              echo "warning: eval failed for $name (before)"
+            echo "::endgroup::"
+          done < <(jq -r '.[] | "\(.name)\t\(.attribute)"' ../hosts.json)
+
+      - name: Eval stats (after)
+        run: |
+          set -euo pipefail
+          mkdir -p stats-after/all
+          while IFS=$'\t' read -r name attr; do
+            echo "::group::eval after: $name"
+            NIX_SHOW_STATS=1 NIX_SHOW_STATS_PATH="stats-after/all/${name}.json" \
+              nix eval --no-eval-cache ".#${attr}" > /dev/null || \
+              echo "warning: eval failed for $name (after)"
+            echo "::endgroup::"
+          done < <(jq -r '.[] | "\(.name)\t\(.attribute)"' hosts.json)
+
+      - name: Compare stats
+        run: |
+          set -euo pipefail
+          {
+            echo "<!-- nix-eval-stats -->"
+            echo "## Nix Eval Stats"
+            echo
+            echo "Paired comparison across $(jq 'length' hosts.json) host(s). Metrics with identical values across all hosts are listed under _Unchanged_; the rest get a paired t-test (p-value, t-stat)."
+            echo
+            nix run .#cmp-stats -- --explain stats-before stats-after
+          } > stats-table.md
+
+      - name: Post comment
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('stats-table.md', 'utf8');
+            const marker = '<!-- nix-eval-stats -->';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

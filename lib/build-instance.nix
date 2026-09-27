@@ -86,6 +86,7 @@ let
       { key = "Debug Mode"; type = "integer"; value = cfg.enableDebugMode; }
       { key = "Disable CPUs"; type = "integer"; value = cfg.enableSingleCpu; }
       { key = "Try To Use GPU Info"; type = "integer"; value = cfg.enableAutomaticGpuDetection; }
+      { key = "IsFnToggleEnabled"; type = "integer"; value = cfg.enableFnToggle; }
 
       { key = "WINEDEBUG"; type = "string"; value = cfg.wineDebugEnvironmentVariable; }
       { key = "Gamma Correction"; type = "string"; value = cfg.gammaCorrection; }
@@ -210,6 +211,14 @@ let
       APP="$DEST/${cfg.name}.app"
       RUN_PATH=${lib.escapeShellArg cfg.runPath}
 
+      launcher_bin() {
+        ${pkgs.python3}/bin/python3 - c '
+import plistlib, sys
+with open(sys.argv[1], "rb") as f:
+    print(plistlib.load(f)["CFBundleExecutable"])
+' "$APP/Contents/Info.plist"
+      }
+
       mkdir -p "$DEST"
 
       if [ ! -e "$APP" ]; then
@@ -226,7 +235,7 @@ let
         /usr/bin/xattr -drs com.apple.quarantine "$APP" || true
 
         echo "==> Running first-time WSS-wineprefixcreate (creates Contents/SharedSupport/prefix)"
-        "$APP/Contents/MacOS/Sikarugir" WSS-wineprefixcreate
+        "$APP/Contents/MacOS/$(launcher_bin)" WSS-wineprefixcreate
       else
         echo "==> $APP already exists! Re-syncing settings only."
 
@@ -257,7 +266,7 @@ let
           chmod -R u+w "$APP/Contents/MacOS"
 
           echo "    Running WSS-wineboot to refresh the existing prefix (drive_c is left untouched)"
-          "$APP/Contents/MacOS/Sikarugir" WSS-wineboot
+          "$APP/Contents/MacOS/$(launcher_bin)" WSS-wineboot
         fi
         ''}
 
@@ -269,6 +278,13 @@ let
 
       /usr/bin/codesign --force --sign - "$APP" \
         || echo "    (codesign failed or unavailable! continuing anyway)"
+
+      ${lib.strings.optionalString (cfg.winetricks.verbs != [ ]) ''
+      echo "==> Applying winetricks verbs: ${lib.strings.concatStringsSep ", " cfg.winetricks.verbs}"
+      ${lib.strings.concatStringsSep "\n" (verb: ''
+        "$APP/Contents/MacOS/$(launcher_bin)" WSS-winetricks ${lib.escapeShellArg verb}
+      '') cfg.winetricks.verbs}
+      ''}
 
       echo "==> ${cfg.name}.app is ready at $APP"
       echo "    Program Name and Path is currently: $RUN_PATH"

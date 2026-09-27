@@ -183,6 +183,11 @@ in
     instead of relying on this.
   '';
 
+  enableFnToggle = legacyPlistBool true ''
+    Whether the Fn key toggles between hardware function-key behavior and
+    the wrapped app receiving raw Fn-modified keys. Legacy key `IsFnToggleEnabled`.
+  '';
+
   enableAvx = legacyPlistBool false ''
     AVX support (`SikarugirWineAppConfig.enableAvx`). No legacy Info.plist
     key surfaced this in either sample inspected. It may be derived from
@@ -215,14 +220,23 @@ in
   '';
 
   installerShouldIgnoreScreenOptions = legacyPlistBool false ''
-    Legacy `force Installer to normal windows`. Not present as a non-default
-    value in either sample inspected; exposed for completeness.
+    Legacy `force Installer to normal windows`. 
   '';
 
   winetricks = {
     force = legacyPlistBool false "Legacy `Winetricks force`.";
     silent = legacyPlistBool true "Legacy `Winetricks silent`. `true` by default.";
     noLogs = legacyPlistBool true "Legacy `Winetricks disable logging`. `true` by default.";
+
+    verbs = lib.options.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "vcrun2019" "dotnet48" "corefonts" ];
+      description = ''
+        Winetricks verbs to install into this instance's Wine prefix.
+        These verbs are applied declaratively on every activation.
+      '';
+    };
   };
 
   symlinks = {

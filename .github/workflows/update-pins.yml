@@ -30,7 +30,7 @@ jobs:
         run: python3 scripts/update-pins.py
 
       - name: Open a PR if anything changed
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "lib/versions.json: refresh pinned Template/Engine hashes"
           title: "Automated: refresh Sikarugir Template/Engine pins"

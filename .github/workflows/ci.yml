@@ -99,4 +99,4 @@ jobs:
         run: |
           set -euxo pipefail
           "$(cat /tmp/activate-script-path)" "$RUNNER_TEMP/SikarugirInstances"
-          /usr/libexec/PlistBuddy -c "Print :Program Name and Path" "$APP/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :"Program Name and Path"' "$APP/Contents/Info.plist"

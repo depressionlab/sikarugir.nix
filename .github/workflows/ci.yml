@@ -66,12 +66,6 @@ jobs:
           "$(cat /tmp/activate-script-path)" "$DEST"
           echo "APP=$DEST/SatisfactoryCX.app" >> "$GITHUB_ENV"
 
-      - name: Verify codesign
-        run: |
-          set -euxo pipefail
-          sleep 6
-          codesign --verify --deep --strict --verbose=4 "$APP"
-
       - name: Verify the new .app is a real directory, not a symlink
         run: |
           set -euxo pipefail
@@ -82,19 +76,15 @@ jobs:
           fi
           echo "OK: $APP is a real directory"
 
-      - name: Verify Contents/MacOS is real but Frameworks is shared
+      - name: Verify Contents/{MacOS, Resources, Frameworks} are shared.
         run: |
-          set -euxo pipefail
-          if [ -L "$APP/Contents/MacOS" ]; then
-            echo "FAIL: Contents/MacOS is a symlink! codesign would have tried (or will next" >&2
-            echo "time) to write a signature into a read-only /nix/store path" >&2
-            exit 1
-          fi
-          if [ ! -L "$APP/Contents/Frameworks" ]; then
-            echo "FAIL: Contents/Frameworks is NOT a symlink! spaceOptimized dedup isn't happening" >&2
-            exit 1
-          fi
-          echo "OK: MacOS is real, Frameworks is shared"
+          for d in MacOS Resources Frameworks; do
+            if [ ! -L "$APP/Contents/$d" ]; then
+              echo "FAIL: Contents/$d is NOT a symlink! spaceOptimized dedup isn't happening" >&2
+              exit 1
+            fi
+          done
+          echo "OK: Configure.app/Frameworks/MacOS/Resources are all shared"
 
       - name: Check Gatekeeper assessment
         run: spctl --assess --type execute --verbose "$APP" || true

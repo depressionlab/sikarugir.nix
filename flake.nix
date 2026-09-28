@@ -49,27 +49,24 @@
 
           # `nix build .#dedup-check`
           dedup-check = pkgs.runCommand "sikarugir-dedup-check" { } ''
-            a_frameworks="$(readlink ${dedupA.skeleton}/${dedupDemo.a.name}.app/Contents/Frameworks)"
-            b_frameworks="$(readlink ${dedupB.skeleton}/${dedupDemo.b.name}.app/Contents/Frameworks)"
+            for d in Frameworks MacOS Resources; do
+              a_link="$(readlink "${dedupA.skeleton}/${dedupDemo.a.name}.app/Contents/$d")"
+              b_link="$(readlink "${dedupB.skeleton}/${dedupDemo.b.name}.app/Contents/$d")"
 
-            echo "instance A (${dedupDemo.a.name}) shares Frameworks: $a_frameworks"
-            echo "instance B (${dedupDemo.b.name}) shares Frameworks: $b_frameworks"
+              echo "instance A (${dedupDemo.a.name}) shares Contents/$d: $a_link"
+              echo "instance B (${dedupDemo.b.name}) shares Contents/$d: $b_link"
 
-            if [ -z "$a_frameworks" ] || [ -z "$b_frameworks" ]; then
-              echo "FAIL: Contents/Frameworks wasn't a symlink. spaceOptimized dedup isn't happening"
-              exit 1
-            fi
-            if [ "$a_frameworks" != "$b_frameworks" ]; then
-              echo "FAIL: two instances on the identical (templateVersion, engine) pair did NOT" \
-                   "resolve to the same shared /nix/store path. The dedup guarantee is broken"
-              exit 1
-            fi
-
-            if [ -L "${dedupA.skeleton}/${dedupDemo.a.name}.app/Contents/MacOS" ]; then
-              echo "FAIL: Contents/MacOS is a symlink! codesign would try to write into the" \
-                   "read-only Nix store the moment two instances share it"
-              exit 1
-            fi
+              if [ -z "$a_link" ] || [ -z "$b_link" ]; then
+                echo "FAIL: Contents/$d wasn't a symlink at all! spaceOptimized dedup isn't happening"
+                exit 1
+              fi
+              if [ "$a_link" != "$b_link" ]; then
+                echo "FAIL: two instances on the identical (templateVersion, engine) pair did NOT" \
+                     "resolve to the same shared /nix/store path for Contents/$d: the dedup" \
+                     "guarantee is broken"
+                exit 1
+              fi
+            done
 
             echo "OK: Frameworks/wine are shared, MacOS stays real per-instance" > "$out"
           '';

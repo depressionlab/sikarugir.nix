@@ -295,7 +295,7 @@ in
       Share this instance's Template+Engine files with every other instance
       that uses the same `templateVersion`/`engine` pair, instead of
       physically duplicating them, by symlinking
-      `Contents/{Configure.app,Frameworks,Resources}` and
+      `Contents/{Configure.app,Frameworks,Resources,MacOS}` and
       `Contents/SharedSupport/wine` out of a shared `/nix/store` derivation
       (see `lib/build-base.nix`).
     '';

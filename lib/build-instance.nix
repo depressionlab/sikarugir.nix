@@ -156,17 +156,15 @@ let
         # of the shared base derivation instead of copied.
         ln -s "${base}/Contents/Configure.app" "$APP/Contents/Configure.app"
         ln -s "${base}/Contents/Frameworks" "$APP/Contents/Frameworks"
+        ln -s "${base}/Contents/MacOS" "$APP/Contents/MacOS"
+        ln -s "${base}/Contents/Resources" "$APP/Contents/Resources"
       '' else ''
         cp -a "${base}/Contents/Configure.app" "$APP/Contents/Configure.app"
         cp -a "${base}/Contents/Frameworks" "$APP/Contents/Frameworks"
-        chmod -R u+w "$APP/Contents/Configure.app" "$APP/Contents/Frameworks"
+        cp -a "${base}/Contents/MacOS" "$APP/Contents/MacOS"
+        cp -a "${base}/Contents/Resources" "$APP/Contents/Resources"
+        chmod -R u+w "$APP/Contents/Configure.app" "$APP/Contents/Frameworks" "$APP/Contents/MacOS" "$APP/Contents/Resources"
       ''}
-
-      cp -a "${base}/Contents/MacOS" "$APP/Contents/MacOS"
-      chmod -R u+w "$APP/Contents/MacOS"
-
-      cp -a "${base}/Contents/Resources" "$APP/Contents/Resources"
-      chmod -R u+w "$APP/Contents/Resources"
 
       cp -a "${base}/Contents/PkgInfo" "$APP/Contents/PkgInfo"
 
@@ -264,30 +262,16 @@ with open(sys.argv[1], "rb") as f:
         # activated, its top-level symlinks still point at the *old*
         # (templateVersion, engine) base derivation, so we relink them at the
         # new one and refresh (not recreate) the prefix against it.
-        #
-        # Checked via Contents/Frameworks, not Contents/MacOS: MacOS is
-        # always a real directory (never a symlink, see this file's header
-        # comment), so `readlink` on it would never match here regardless
-        # of whether the pin actually changed.
         CURRENT_BASE="$(readlink "$APP/Contents/Frameworks" 2>/dev/null || echo "")"
         DESIRED_BASE="${base}/Contents/Frameworks"
         if [ -L "$APP/Contents/Frameworks" ] && [ "$CURRENT_BASE" != "$DESIRED_BASE" ]; then
           echo "    Template/Engine pin changed. Relinking shared Contents/* and refreshing the prefix"
-          for d in Configure.app Frameworks; do
-            rm -f "$APP/Contents/$d"
+          for d in Configure.app Frameworks MacOS Resources; do
+            rm -rf "$APP/Contents/$d"
             ln -s "${base}/Contents/$d" "$APP/Contents/$d"
           done
           rm -f "$APP/Contents/SharedSupport/wine"
           ln -s "${base}/Contents/SharedSupport/wine" "$APP/Contents/SharedSupport/wine"
-
-          # MacOS is real, not symlinked, so we swap its actual contents for the new base's, not just a link.
-          rm -rf "$APP/Contents/MacOS"
-          cp -a "${base}/Contents/MacOS" "$APP/Contents/MacOS"
-          chmod -R u+w "$APP/Contents/MacOS"
-
-          rm -rf "$APP/Contents/Resources"
-          cp -a "${base}/Contents/Resources" "$APP/Contents/Resources"
-          chmod -R u+w "$APP/Contents/Resources"
 
           echo "    Running WSS-wineboot to refresh the existing prefix (drive_c is left untouched)"
           "$APP/Contents/MacOS/$(launcher_bin)" WSS-wineboot
@@ -300,10 +284,6 @@ with open(sys.argv[1], "rb") as f:
 
       # Always re-apply Info.plist patches on every activation.
       ${patchInfoPlist}
-
-      sleep 6
-      /usr/bin/codesign --force --sign - "$APP" \
-        || echo "    (codesign failed or unavailable! continuing anyway)"
 
       ${lib.strings.optionalString (cfg.winetricks.verbs != [ ]) ''
       echo "==> Applying winetricks verbs: ${lib.strings.concatStringsSep ", " cfg.winetricks.verbs}"

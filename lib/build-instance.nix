@@ -156,16 +156,17 @@ let
         # of the shared base derivation instead of copied.
         ln -s "${base}/Contents/Configure.app" "$APP/Contents/Configure.app"
         ln -s "${base}/Contents/Frameworks" "$APP/Contents/Frameworks"
-        ln -s "${base}/Contents/Resources" "$APP/Contents/Resources"
       '' else ''
         cp -a "${base}/Contents/Configure.app" "$APP/Contents/Configure.app"
         cp -a "${base}/Contents/Frameworks" "$APP/Contents/Frameworks"
-        cp -a "${base}/Contents/Resources" "$APP/Contents/Resources"
-        chmod -R u+w "$APP/Contents/Configure.app" "$APP/Contents/Frameworks" "$APP/Contents/Resources"
+        chmod -R u+w "$APP/Contents/Configure.app" "$APP/Contents/Frameworks"
       ''}
 
       cp -a "${base}/Contents/MacOS" "$APP/Contents/MacOS"
       chmod -R u+w "$APP/Contents/MacOS"
+
+      cp -a "${base}/Contents/Resources" "$APP/Contents/Resources"
+      chmod -R u+w "$APP/Contents/Resources"
 
       cp -a "${base}/Contents/PkgInfo" "$APP/Contents/PkgInfo"
 
@@ -272,7 +273,7 @@ with open(sys.argv[1], "rb") as f:
         DESIRED_BASE="${base}/Contents/Frameworks"
         if [ -L "$APP/Contents/Frameworks" ] && [ "$CURRENT_BASE" != "$DESIRED_BASE" ]; then
           echo "    Template/Engine pin changed. Relinking shared Contents/* and refreshing the prefix"
-          for d in Configure.app Frameworks Resources; do
+          for d in Configure.app Frameworks; do
             rm -f "$APP/Contents/$d"
             ln -s "${base}/Contents/$d" "$APP/Contents/$d"
           done
@@ -283,6 +284,10 @@ with open(sys.argv[1], "rb") as f:
           rm -rf "$APP/Contents/MacOS"
           cp -a "${base}/Contents/MacOS" "$APP/Contents/MacOS"
           chmod -R u+w "$APP/Contents/MacOS"
+
+          rm -rf "$APP/Contents/Resources"
+          cp -a "${base}/Contents/Resources" "$APP/Contents/Resources"
+          chmod -R u+w "$APP/Contents/Resources"
 
           echo "    Running WSS-wineboot to refresh the existing prefix (drive_c is left untouched)"
           "$APP/Contents/MacOS/$(launcher_bin)" WSS-wineboot

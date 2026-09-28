@@ -296,6 +296,7 @@ with open(sys.argv[1], "rb") as f:
       # Always re-apply Info.plist patches on every activation.
       ${patchInfoPlist}
 
+      sleep 6
       /usr/bin/codesign --force --sign - "$APP" \
         || echo "    (codesign failed or unavailable! continuing anyway)"
 

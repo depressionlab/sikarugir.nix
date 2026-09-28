@@ -69,6 +69,7 @@ jobs:
       - name: Verify codesign
         run: |
           set -euxo pipefail
+          sleep 6
           codesign --verify --deep --strict --verbose=4 "$APP"
 
       - name: Verify the new .app is a real directory, not a symlink
